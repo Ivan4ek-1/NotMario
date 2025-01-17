@@ -63,7 +63,7 @@ wall = TouchableObject('wall', 300, 140, 70, 70)
 #coin = TouchableObject('animated_coin', 0, 400, 420, 210)
 heart = TouchableObject('heart', 0, 500, 50, 50)
 
-coin = AnimatedSprite(load_image('animated_coin.png'), 6, 1, 50, 50)
+coin = AnimatedSprite(pygame.transform.scale(load_image('animated_coin.png'), (420, 210)), 6, 1, 50, 50)
 
 pygame.init()
 screen = pygame.display.set_mode(SIZE)
