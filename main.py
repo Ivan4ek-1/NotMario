@@ -2,7 +2,6 @@ import pygame
 import os
 import sys
 
-
 BLACK = pygame.Color("#000000")
 WHITE = pygame.Color("#ffffff")
 RED = pygame.Color("#ff0000")
@@ -37,7 +36,7 @@ def load_level(filename):
 
 class TouchableObject(pygame.sprite.Sprite):
     def __init__(self, name, pos_x, pos_y, scale_x, scale_y):
-        super().__init__(all_sprites)
+        super().__init__(all_sprites, platform_group)
         tile_filename = name + '.png'
         self.image = pygame.transform.scale(load_image(tile_filename), (scale_x, scale_y))
         self.rect = self.image.get_rect().move(TILE_WIDTH * pos_x, TILE_HEIGHT * pos_y)
@@ -45,7 +44,7 @@ class TouchableObject(pygame.sprite.Sprite):
 
 class AnimatedSprite(pygame.sprite.Sprite):
     def __init__(self, sheet, columns, rows, x, y):
-        super().__init__(all_sprites)
+        super().__init__(collectible_group)
         self.frames = []
         self.cut_sheet(sheet, columns, rows)
         self.cur_frame = 0
@@ -72,20 +71,48 @@ class AnimatedSprite(pygame.sprite.Sprite):
 
 class Player(pygame.sprite.Sprite):
     def __init__(self, pos_x, pos_y):
-        super().__init__(player_group, all_sprites)
+        super().__init__(player_group)
         self.image = player_image
         self.rect = self.image.get_rect().move(TILE_WIDTH * pos_x, TILE_HEIGHT * pos_y)
-        self.x, self.y = pos_x, pos_y
+        self.can_jump = False
+        self.start_jump = 12
+        self.jump_direction = 1
+        self.y_position = self.rect.y
 
-    def move(self, key):
-        delta_x, delta_y = None, None
-        if key == pygame.K_RIGHT:
-            delta_x, delta_y = 10, 0
-        if key == pygame.K_LEFT:
-            delta_x, delta_y = -10, 0
-        self.rect = self.rect.move(self.x + delta_x, self.y + delta_y)
-        #if pygame.sprite.spritecollideany(player, all_sprites):
-           # self.rect = self.rect.move(-delta_x, -delta_y)
+    def update(self, key=None):
+        if not self.can_jump:
+            self.rect = self.rect.move(0, 1)
+        if pygame.sprite.spritecollideany(self, platform_group):
+            self.rect = self.rect.move(0, -1)
+            self.can_jump = False
+            self.y_position = self.rect.y
+
+        delta_x, delta_y = 0, 0
+        if self.can_jump:
+            if self.rect.y != self.y_position:
+                self.start_jump -= self.jump_direction
+                self.y_position -= self.start_jump * self.jump_direction
+                self.rect.y = self.y_position
+                if self.start_jump == 0 or self.start_jump == 10:
+                    self.jump_direction *= -1
+            else:
+                self.can_jump = False
+        print(self.start_jump, self.can_jump, self.jump_direction, self.y_position, self.rect.y)
+        if key:
+            if key == pygame.K_SPACE and self.rect.y == self.y_position:
+                self.rect.y-=self.start_jump
+                self.can_jump = True
+                self.y_position = self.rect.y
+
+            if key == pygame.K_a:
+                delta_x, delta_y = -5, 0
+                self.rect = self.rect.move(delta_x, delta_y)
+            if key == pygame.K_d:
+                delta_x, delta_y = 5, 0
+                self.rect = self.rect.move(delta_x, delta_y)
+
+            if pygame.sprite.spritecollideany(self, platform_group):
+                self.rect = self.rect.move(-delta_x, -delta_y)
 
 
 def generate_level(level):
@@ -112,7 +139,7 @@ def generate_level(level):
 
 def start_screen():
     intro_text = ["NotMario", "",
-                  "Начать игру",]
+                  "Начать игру", ]
     fon = pygame.transform.scale(load_image('starterscreen.jpg'), (WIDTH, HEIGHT))
     screen.blit(fon, (0, 0))
     font = pygame.font.Font("data/Font.otf", 30)
@@ -138,16 +165,17 @@ def start_screen():
 
 all_sprites = pygame.sprite.Group()
 player_group = pygame.sprite.Group()
-#player_image = load_image('tempplayer.png')
+platform_group = pygame.sprite.Group()
+collectible_group = pygame.sprite.Group()
 player_image = pygame.transform.scale(load_image('player_stand.png'), (50, 70))
 
-#cloud = TouchableObject('cloud', 0, 0, 200, 70)
-#brick = TouchableObject('brick', 300, 0, 70, 70)
-#powerup = TouchableObject('powerup_brick', 300, 70, 70, 70)
-#float_land = TouchableObject('floating_land', 0, 300, 120, 60)
-#wall = TouchableObject('wall', 300, 140, 70, 70)
-#heart = TouchableObject('heart', 0, 500, 50, 50)
-#coin = AnimatedSprite(pygame.transform.scale(load_image('animated_coin.png'), (420, 210)), 6, 1, 50, 50)
+# cloud = TouchableObject('cloud', 0, 0, 200, 70)
+# brick = TouchableObject('brick', 300, 0, 70, 70)
+# powerup = TouchableObject('powerup_brick', 300, 70, 70, 70)
+# float_land = TouchableObject('floating_land', 0, 300, 120, 60)
+# wall = TouchableObject('wall', 300, 140, 70, 70)
+# heart = TouchableObject('heart', 0, 500, 50, 50)
+# coin = AnimatedSprite(pygame.transform.scale(load_image('animated_coin.png'), (420, 210)), 6, 1, 50, 50)
 
 player, level_x, level_y = generate_level(load_level('map.txt'))
 
@@ -162,16 +190,25 @@ background = pygame.transform.scale(load_image('background.png'), (WIDTH, HEIGHT
 while running:
     clock.tick(FPS)
     keys = pygame.key.get_pressed()
-    if keys[pygame.K_LEFT]:
-        player_group.update(pygame.K_LEFT)
-    if keys[pygame.K_RIGHT]:
-        player_group.update(pygame.K_RIGHT)
+    if keys[pygame.K_a]:
+        player_group.update(pygame.K_a)
+    if keys[pygame.K_d]:
+        player_group.update(pygame.K_d)
+    # if keys[pygame.K_SPACE]:
+    #     player_group.update(pygame.K_SPACE)
     for event in pygame.event.get():
         running = not event.type == pygame.QUIT
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_SPACE:
+                player.update(pygame.K_SPACE)
     screen.blit(background, (0, 0))
-    #screen.fill(WHITE)
+    # screen.fill(WHITE)
     all_sprites.draw(screen)
+    player_group.draw(screen)
+    collectible_group.draw(screen)
     all_sprites.update()
+    player_group.update()
+    collectible_group.update()
     pygame.display.flip()
 
 pygame.quit()
