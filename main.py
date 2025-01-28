@@ -44,7 +44,7 @@ class TouchableObject(pygame.sprite.Sprite):
 
 class AnimatedSprite(pygame.sprite.Sprite):
     def __init__(self, sheet, columns, rows, x, y):
-        super().__init__(collectible_group)
+        super().__init__(collectible_group, all_sprites)
         self.frames = []
         self.cut_sheet(sheet, columns, rows)
         self.cur_frame = 0
@@ -69,50 +69,63 @@ class AnimatedSprite(pygame.sprite.Sprite):
             self.cnt = 0
 
 
+class Camera:
+    def __init__(self):
+        self.dx = 0
+        self.dy = 0
+
+    def apply(self, obj):
+        obj.rect.x += self.dx
+        obj.rect.y += self.dy
+
+    def update(self, target):
+        self.dx = -(target.rect.x + target.rect.w // 2 - WIDTH // 2)
+        self.dy = -(target.rect.y + target.rect.h // 2 - HEIGHT // 2) + 140
+
+
 class Player(pygame.sprite.Sprite):
     def __init__(self, pos_x, pos_y):
         super().__init__(player_group)
         self.image = player_image
         self.rect = self.image.get_rect().move(TILE_WIDTH * pos_x, TILE_HEIGHT * pos_y)
-        self.can_jump = False
-        self.start_jump = 12
-        self.jump_direction = 1
-        self.y_position = self.rect.y
+        self.do_jump = False
+        self.jump_speed = -20
+        self.jump_direction = True
+        self.down = 1
+        self.collide_flag = True
+        self.flag = True
 
     def update(self, key=None):
-        if not self.can_jump:
-            self.rect = self.rect.move(0, 1)
-        if pygame.sprite.spritecollideany(self, platform_group):
-            self.rect = self.rect.move(0, -1)
-            self.can_jump = False
-            self.y_position = self.rect.y
-
-        delta_x, delta_y = 0, 0
-        if self.can_jump:
-            if self.rect.y != self.y_position:
-                self.start_jump -= self.jump_direction
-                self.y_position -= self.start_jump * self.jump_direction
-                self.rect.y = self.y_position
-                if self.start_jump == 0 or self.start_jump == 10:
-                    self.jump_direction *= -1
+        delta_x, delta_y = 0, 5
+        if self.do_jump:
+            if self.jump_direction:
+                self.jump_speed += 1
             else:
-                self.can_jump = False
-        print(self.start_jump, self.can_jump, self.jump_direction, self.y_position, self.rect.y)
+                self.jump_speed -= 1
+            if self.flag:
+                delta_y = self.jump_speed
+        if self.jump_speed == 0:
+            self.flag = False
+            self.jump_direction = not self.jump_direction
+        if self.jump_speed < -20:
+            self.jump_direction = not self.jump_direction
+            self.do_jump = False
+            self.jump_speed = -20
+            self.flag = True
+        print(self.jump_speed, self.jump_direction, self.collide_flag)
         if key:
-            if key == pygame.K_SPACE and self.rect.y == self.y_position:
-                self.rect.y-=self.start_jump
-                self.can_jump = True
-                self.y_position = self.rect.y
-
+            if key == pygame.K_SPACE and self.collide_flag:
+                self.do_jump = True
+                self.collide_flag = False
             if key == pygame.K_a:
                 delta_x, delta_y = -5, 0
-                self.rect = self.rect.move(delta_x, delta_y)
             if key == pygame.K_d:
                 delta_x, delta_y = 5, 0
-                self.rect = self.rect.move(delta_x, delta_y)
 
-            if pygame.sprite.spritecollideany(self, platform_group):
-                self.rect = self.rect.move(-delta_x, -delta_y)
+        self.rect = self.rect.move(delta_x, delta_y)
+        if pygame.sprite.spritecollideany(self, platform_group):
+            self.rect = self.rect.move(-delta_x, -delta_y)
+            self.collide_flag = True
 
 
 def generate_level(level):
@@ -167,6 +180,7 @@ all_sprites = pygame.sprite.Group()
 player_group = pygame.sprite.Group()
 platform_group = pygame.sprite.Group()
 collectible_group = pygame.sprite.Group()
+camera = Camera()
 player_image = pygame.transform.scale(load_image('player_stand.png'), (50, 70))
 
 # cloud = TouchableObject('cloud', 0, 0, 200, 70)
@@ -209,6 +223,10 @@ while running:
     all_sprites.update()
     player_group.update()
     collectible_group.update()
+    camera.update(player)
+    camera.apply(player)
+    for sprite in all_sprites:
+        camera.apply(sprite)
     pygame.display.flip()
 
 pygame.quit()
