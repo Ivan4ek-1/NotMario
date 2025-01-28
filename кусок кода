@@ -1,4 +1,12 @@
-# Обработка прыжка
+while True:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            sys.exit()
+
+    keys = pygame.key.get_pressed()
+    
+    # Обработка прыжка
     if not is_jumping:
         if keys[pygame.K_SPACE]:  # Прыжок при нажатии пробела
             is_jumping = True
