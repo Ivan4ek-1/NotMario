@@ -176,6 +176,31 @@ def start_screen():
         clock.tick(FPS)
 
 
+def end_screen():
+    intro_text = ["Game Over"]
+    fon = pygame.transform.scale(load_image('starterscreen.jpg'), (WIDTH, HEIGHT))
+    screen.blit(fon, (0, 0))
+    font = pygame.font.Font("data/Font.otf", 50)
+    text_coord = 50
+    for line in intro_text:
+        string_rendered = font.render(line, 1, BLACK)
+        intro_rect = string_rendered.get_rect()
+        text_coord += 10
+        intro_rect.top = text_coord
+        intro_rect.x = 250
+        text_coord += intro_rect.height
+        screen.blit(string_rendered, intro_rect)
+
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                terminate()
+            elif event.type == pygame.KEYDOWN or event.type == pygame.MOUSEBUTTONDOWN:
+                return
+        pygame.display.flip()
+        clock.tick(FPS)
+
+
 all_sprites = pygame.sprite.Group()
 player_group = pygame.sprite.Group()
 platform_group = pygame.sprite.Group()
@@ -208,8 +233,6 @@ while running:
         player_group.update(pygame.K_a)
     if keys[pygame.K_d]:
         player_group.update(pygame.K_d)
-    # if keys[pygame.K_SPACE]:
-    #     player_group.update(pygame.K_SPACE)
     for event in pygame.event.get():
         running = not event.type == pygame.QUIT
         if event.type == pygame.KEYDOWN:
@@ -228,5 +251,7 @@ while running:
     for sprite in all_sprites:
         camera.apply(sprite)
     pygame.display.flip()
+    if player.rect.y > HEIGHT:
+        end_screen()
 
 pygame.quit()
