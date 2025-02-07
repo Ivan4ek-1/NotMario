@@ -10,6 +10,7 @@ BLUE = pygame.Color("#0000ff")
 SIZE = WIDTH, HEIGHT = (1000, 700)
 FPS = 60
 TILE_WIDTH, TILE_HEIGHT = 70, 70
+score = 1000
 
 
 def terminate():
@@ -135,6 +136,14 @@ class Player(pygame.sprite.Sprite):
             self.collide_flag = True
 
 
+class Enemy(pygame.sprite.Sprite):
+    def __init__(self, pos_x, pos_y):
+        super().__init__(all_sprites)
+
+    def update(self):
+        pass
+
+
 def generate_level(level):
     new_player, x, y = None, None, None
     player_x, player_y = None, None
@@ -202,8 +211,6 @@ def end_screen():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 terminate()
-            elif event.type == pygame.KEYDOWN or event.type == pygame.MOUSEBUTTONDOWN:
-                return
         pygame.display.flip()
         clock.tick(FPS)
 
@@ -235,8 +242,8 @@ start_screen()
 background = pygame.transform.scale(load_image('background.png'), (WIDTH, HEIGHT))
 while running:
     clock.tick(FPS)
-    #if player.rect.y > HEIGHT:
-       # end_screen()
+    score -= 0.01
+    print(round(score, 2))
     keys = pygame.key.get_pressed()
     if keys[pygame.K_a]:
         player_group.update(pygame.K_a)
@@ -258,6 +265,10 @@ while running:
     camera.apply(player)
     for sprite in all_sprites:
         camera.apply(sprite)
+    print(player_group.sprites()[0].rect[2], HEIGHT)
+    if player.rect.y > HEIGHT:
+        end_screen()
+        print(99)
     pygame.display.flip()
 
 pygame.quit()
