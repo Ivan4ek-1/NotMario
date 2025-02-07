@@ -34,6 +34,13 @@ def load_level(filename):
     return list(map(lambda x: x.ljust(max_width, '.'), level_map))
 
 
+class LevelButton(pygame.sprite.Sprite):
+    def __init__(self, num):
+        super().__init__(all_sprites)
+        self.num = num
+
+
+
 class TouchableObject(pygame.sprite.Sprite):
     def __init__(self, name, pos_x, pos_y, scale_x, scale_y):
         super().__init__(all_sprites, platform_group)
@@ -216,7 +223,7 @@ player_image = pygame.transform.scale(load_image('player_stand.png'), (50, 70))
 # heart = TouchableObject('heart', 0, 500, 50, 50)
 # coin = AnimatedSprite(pygame.transform.scale(load_image('animated_coin.png'), (420, 210)), 6, 1, 50, 50)
 
-player, level_x, level_y = generate_level(load_level('map.txt'))
+player, level_x, level_y = generate_level(load_level('map1.txt'))
 
 pygame.init()
 screen = pygame.display.set_mode(SIZE)
@@ -228,6 +235,8 @@ start_screen()
 background = pygame.transform.scale(load_image('background.png'), (WIDTH, HEIGHT))
 while running:
     clock.tick(FPS)
+    #if player.rect.y > HEIGHT:
+       # end_screen()
     keys = pygame.key.get_pressed()
     if keys[pygame.K_a]:
         player_group.update(pygame.K_a)
@@ -239,7 +248,6 @@ while running:
             if event.key == pygame.K_SPACE:
                 player.update(pygame.K_SPACE)
     screen.blit(background, (0, 0))
-    # screen.fill(WHITE)
     all_sprites.draw(screen)
     player_group.draw(screen)
     collectible_group.draw(screen)
@@ -251,7 +259,5 @@ while running:
     for sprite in all_sprites:
         camera.apply(sprite)
     pygame.display.flip()
-    if player.rect.y > HEIGHT:
-        end_screen()
 
 pygame.quit()
