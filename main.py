@@ -35,11 +35,35 @@ def load_level(filename):
     return list(map(lambda x: x.ljust(max_width, '.'), level_map))
 
 
-class LevelButton(pygame.sprite.Sprite):
-    def __init__(self, num):
-        super().__init__(all_sprites)
-        self.num = num
+class LevelButton:
+    def __init__(self, level):
+        self.level = level
+        self.rect = pygame.Rect(50, 300 + (60 * (level - 1)), 250, 45)
 
+    def draw(self, surface):
+        pygame.draw.rect(surface, BLACK, self.rect, 2)
+        font = pygame.font.Font("data/Font.otf", 22)
+        text = font.render(f"Уровень {'A' if self.level == 1 else 'B' if self.level == 2 else 'C'}", True, BLACK)
+        surface.blit(text, (self.rect.x + 10, self.rect.y + 10))
+
+    def is_clicked(self, pos):
+        return self.rect.collidepoint(pos)
+
+
+class Enemy(pygame.sprite.Sprite):
+    def __init__(self, name, pos_x, pos_y, scale_x, scale_y):
+        super().__init__(all_sprites, enemy_group)
+        enemy_filename = name + '.png'
+        self.image = pygame.transform.scale(load_image(enemy_filename), (scale_x, scale_y))
+        self.rect = self.image.get_rect().move(TILE_WIDTH * pos_x, TILE_HEIGHT * pos_y)
+        self.speed = 0.5
+        self.direction = 1
+        self.bounds = (TILE_WIDTH * pos_x - 100, TILE_WIDTH * pos_x + 100)
+
+    def update(self):
+        self.rect.x += self.speed * self.direction
+        if self.rect.left <= self.bounds[0] or self.rect.right >= self.bounds[1]:
+            self.direction *= -1
 
 
 class TouchableObject(pygame.sprite.Sprite):
@@ -136,14 +160,6 @@ class Player(pygame.sprite.Sprite):
             self.collide_flag = True
 
 
-class Enemy(pygame.sprite.Sprite):
-    def __init__(self, pos_x, pos_y):
-        super().__init__(all_sprites)
-
-    def update(self):
-        pass
-
-
 def generate_level(level):
     new_player, x, y = None, None, None
     player_x, player_y = None, None
@@ -159,6 +175,8 @@ def generate_level(level):
                 TouchableObject('cloud', x, y, 200, 70)
             elif level[y][x] == '@':
                 player_x, player_y = x, y
+            elif level[y][x] == '0':
+                Enemy('turtle', x, y, 70, 70)
             elif level[y][x] == '*':
                 AnimatedSprite(pygame.transform.scale(load_image('animated_coin.png'), (420, 210)),
                                6, 1, x, y)
@@ -168,11 +186,12 @@ def generate_level(level):
 
 def start_screen():
     intro_text = ["NotMario", "",
-                  "Начать игру", ]
+                  "Добро пожаловать", ]
     fon = pygame.transform.scale(load_image('starterscreen.jpg'), (WIDTH, HEIGHT))
     screen.blit(fon, (0, 0))
     font = pygame.font.Font("data/Font.otf", 30)
     text_coord = 50
+    level_buttons = [LevelButton(i) for i in range(1, 4)]
     for line in intro_text:
         string_rendered = font.render(line, 1, BLACK)
         intro_rect = string_rendered.get_rect()
@@ -186,8 +205,14 @@ def start_screen():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 terminate()
-            elif event.type == pygame.KEYDOWN or event.type == pygame.MOUSEBUTTONDOWN:
-                return
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                for button in level_buttons:
+                    if button.is_clicked(event.pos):
+                        return button.level
+        for button in level_buttons:
+            button.draw(screen)
+        start_sprites.draw(screen)
+        start_sprites.update()
         pygame.display.flip()
         clock.tick(FPS)
 
@@ -219,18 +244,10 @@ all_sprites = pygame.sprite.Group()
 player_group = pygame.sprite.Group()
 platform_group = pygame.sprite.Group()
 collectible_group = pygame.sprite.Group()
+start_sprites = pygame.sprite.Group()
+enemy_group = pygame.sprite.Group()
 camera = Camera()
 player_image = pygame.transform.scale(load_image('player_stand.png'), (50, 70))
-
-# cloud = TouchableObject('cloud', 0, 0, 200, 70)
-# brick = TouchableObject('brick', 300, 0, 70, 70)
-# powerup = TouchableObject('powerup_brick', 300, 70, 70, 70)
-# float_land = TouchableObject('floating_land', 0, 300, 120, 60)
-# wall = TouchableObject('wall', 300, 140, 70, 70)
-# heart = TouchableObject('heart', 0, 500, 50, 50)
-# coin = AnimatedSprite(pygame.transform.scale(load_image('animated_coin.png'), (420, 210)), 6, 1, 50, 50)
-
-player, level_x, level_y = generate_level(load_level('map1.txt'))
 
 pygame.init()
 screen = pygame.display.set_mode(SIZE)
@@ -238,7 +255,14 @@ pygame.display.set_caption('NotMario')
 running = True
 clock = pygame.time.Clock()
 
-start_screen()
+level_num = start_screen()
+if level_num == 1:
+    player, level_x, level_y = generate_level(load_level('map1.txt'))
+elif level_num == 2:
+    player, level_x, level_y = generate_level(load_level('map2.txt'))
+elif level_num == 3:
+    player, level_x, level_y = generate_level(load_level('map3.txt'))
+
 background = pygame.transform.scale(load_image('background.png'), (WIDTH, HEIGHT))
 while running:
     clock.tick(FPS)
@@ -257,18 +281,16 @@ while running:
     screen.blit(background, (0, 0))
     all_sprites.draw(screen)
     player_group.draw(screen)
+    enemy_group.draw(screen)
     collectible_group.draw(screen)
     all_sprites.update()
+    enemy_group.update()
     player_group.update()
     collectible_group.update()
     camera.update(player)
     camera.apply(player)
     for sprite in all_sprites:
         camera.apply(sprite)
-    print(player_group.sprites()[0].rect[2], HEIGHT)
-    if player.rect.y > HEIGHT:
-        end_screen()
-        print(99)
     pygame.display.flip()
 
 pygame.quit()
