@@ -2,7 +2,7 @@ import pygame
 import os
 import sys
 
-from pygame.sprite import spritecollideany
+#main
 
 BLACK = pygame.Color("#000000")
 WHITE = pygame.Color("#ffffff")
