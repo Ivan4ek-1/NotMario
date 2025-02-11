@@ -79,14 +79,20 @@ class TouchableObject(pygame.sprite.Sprite):
         self.name = name
         self.image = pygame.transform.scale(load_image(tile_filename), (scale_x, scale_y))
         self.rect = self.image.get_rect().move(TILE_WIDTH * pos_x, TILE_HEIGHT * pos_y)
-        if name == 'flag':
-            self.rect = self.image.get_rect().move(TILE_WIDTH * pos_x, TILE_HEIGHT * pos_y - 80)
+
+
+class Flag(pygame.sprite.Sprite):
+    def __init__(self, name, pos_x, pos_y, scale_x, scale_y):
+        super().__init__(all_sprites, flag_group)
+        tile_filename = name + '.png'
+        self.name = name
+        self.image = pygame.transform.scale(load_image(tile_filename), (scale_x, scale_y))
+        self.rect = self.image.get_rect().move(TILE_WIDTH * pos_x, TILE_HEIGHT * pos_y - 80)
 
     def update(self):
-        if self.name == 'flag':
-            pass
-            #if pygame.sprite.spritecollideany(self, player_group):
-                #end_screen()
+        pass
+        #if pygame.sprite.spritecollideany(self, player_group):
+            #end_screen()
 
 
 class AnimatedSprite(pygame.sprite.Sprite):
@@ -163,7 +169,6 @@ class Player(pygame.sprite.Sprite):
             self.do_jump = False
             self.jump_speed = -20
             self.flag = True
-        print(self.jump_speed, self.jump_direction, self.collide_flag)
         if key:
             if key == pygame.K_SPACE and self.collide_flag:
                 self.do_jump = True
@@ -197,7 +202,7 @@ def generate_level(level):
             elif level[y][x] == '0':
                 Enemy('turtle', x, y, 70, 70)
             elif level[y][x] == '1':
-                TouchableObject('flag', x, y, 200, 160)
+                Flag('flag', x, y, 200, 160)
             elif level[y][x] == '*':
                 AnimatedSprite(pygame.transform.scale(load_image('animated_coin.png'), (420, 210)),
                                6, 1, x, y)
@@ -264,6 +269,7 @@ def end_screen():
 all_sprites = pygame.sprite.Group()
 player_group = pygame.sprite.Group()
 platform_group = pygame.sprite.Group()
+flag_group = pygame.sprite.Group()
 collectible_group = pygame.sprite.Group()
 start_sprites = pygame.sprite.Group()
 enemy_group = pygame.sprite.Group()
@@ -287,6 +293,8 @@ elif level_num == 3:
 background = pygame.transform.scale(load_image('background.png'), (WIDTH, HEIGHT))
 while running:
     clock.tick(FPS)
+    if pygame.sprite.spritecollideany(player, flag_group):
+        break
     score -= 0.01
     score = round(score, 2)
     print(score)
@@ -314,5 +322,7 @@ while running:
     for sprite in all_sprites:
         camera.apply(sprite)
     pygame.display.flip()
+
+end_screen()
 
 pygame.quit()
