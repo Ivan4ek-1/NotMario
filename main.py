@@ -244,7 +244,17 @@ def start_screen():
 
 
 def end_screen():
-    intro_text = ["Game Over"]
+    score_mark = 0
+    if score > 1200:
+        score_mark = 'S'
+    elif 1000 < score < 1200:
+        score_mark = 'A'
+    elif 800 < score < 1000:
+        score_mark = 'B'
+    elif score_mark < 800:
+        score_mark = 'C'
+    intro_text = ["Game Over",
+                  f'Score {score_mark}']
     fon = pygame.transform.scale(load_image('starterscreen.jpg'), (WIDTH, HEIGHT))
     screen.blit(fon, (0, 0))
     font = pygame.font.Font("data/Font.otf", 50)
