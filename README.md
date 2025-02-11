@@ -30,4 +30,4 @@ Pygame - модуль, на которм написана игра
 Sys - вспомогательный модуль для выхода из игры
 Os - модуль для подключения изображений спрайтов
 
-скриншоты - доделать
+презентация: https://docs.google.com/presentation/d/18zVEGL02lun3neQQOvQK_Yt5JFieXjOG/edit?usp=sharing&ouid=107775468984544918850&rtpof=true&sd=true
