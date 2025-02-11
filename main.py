@@ -317,6 +317,7 @@ background = pygame.transform.scale(load_image('background.png'), (WIDTH, HEIGHT
 while running:
     clock.tick(FPS)
     if pygame.sprite.spritecollideany(player, flag_group):
+        score += 300
         break
     if pygame.sprite.spritecollideany(player, death_borders):
         score -= 900
