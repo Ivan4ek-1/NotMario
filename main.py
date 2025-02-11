@@ -320,7 +320,7 @@ while running:
         score += 300
         break
     if pygame.sprite.spritecollideany(player, death_borders):
-        score -= 900
+        score = 0
         break
     score -= 0.01
     score = round(score, 2)
