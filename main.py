@@ -2,6 +2,8 @@ import pygame
 import os
 import sys
 
+from pygame.sprite import spritecollideany
+
 BLACK = pygame.Color("#000000")
 WHITE = pygame.Color("#ffffff")
 RED = pygame.Color("#ff0000")
@@ -61,9 +63,13 @@ class Enemy(pygame.sprite.Sprite):
         self.bounds = (TILE_WIDTH * pos_x - 100, TILE_WIDTH * pos_x + 100)
 
     def update(self):
+        global score
         self.rect.x += self.speed * self.direction
         if self.rect.left <= self.bounds[0] or self.rect.right >= self.bounds[1]:
             self.direction *= -1
+        if pygame.sprite.spritecollideany(self, player_group):
+            self.kill()
+            score += 500
 
 
 class TouchableObject(pygame.sprite.Sprite):
@@ -72,6 +78,8 @@ class TouchableObject(pygame.sprite.Sprite):
         tile_filename = name + '.png'
         self.image = pygame.transform.scale(load_image(tile_filename), (scale_x, scale_y))
         self.rect = self.image.get_rect().move(TILE_WIDTH * pos_x, TILE_HEIGHT * pos_y)
+        if name == 'flag':
+            self.rect = self.image.get_rect().move(TILE_WIDTH * pos_x, TILE_HEIGHT * pos_y - 80)
 
 
 class AnimatedSprite(pygame.sprite.Sprite):
@@ -94,11 +102,15 @@ class AnimatedSprite(pygame.sprite.Sprite):
                     frame_location, self.rect.size)))
 
     def update(self):
+        global score
         self.cnt += 1
         if self.cnt == 5:
             self.cur_frame = (self.cur_frame + 1) % len(self.frames)
             self.image = self.frames[self.cur_frame]
             self.cnt = 0
+        if pygame.sprite.spritecollideany(self, player_group):
+            self.kill()
+            score += 100
 
 
 class Camera:
@@ -177,6 +189,8 @@ def generate_level(level):
                 player_x, player_y = x, y
             elif level[y][x] == '0':
                 Enemy('turtle', x, y, 70, 70)
+            elif level[y][x] == '1':
+                TouchableObject('flag', x, y, 200, 160)
             elif level[y][x] == '*':
                 AnimatedSprite(pygame.transform.scale(load_image('animated_coin.png'), (420, 210)),
                                6, 1, x, y)
@@ -267,7 +281,8 @@ background = pygame.transform.scale(load_image('background.png'), (WIDTH, HEIGHT
 while running:
     clock.tick(FPS)
     score -= 0.01
-    print(round(score, 2))
+    score = round(score, 2)
+    print(score)
     keys = pygame.key.get_pressed()
     if keys[pygame.K_a]:
         player_group.update(pygame.K_a)
