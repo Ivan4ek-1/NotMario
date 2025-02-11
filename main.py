@@ -91,8 +91,18 @@ class Flag(pygame.sprite.Sprite):
 
     def update(self):
         pass
-        #if pygame.sprite.spritecollideany(self, player_group):
-            #end_screen()
+
+
+class DeathBorder(pygame.sprite.Sprite):
+    def __init__(self, name, pos_x, pos_y, scale_x, scale_y):
+        super().__init__(all_sprites, death_borders)
+        tile_filename = name + '.png'
+        self.name = name
+        self.image = pygame.transform.scale(load_image(tile_filename), (scale_x, scale_y))
+        self.rect = self.image.get_rect().move(TILE_WIDTH * pos_x, TILE_HEIGHT * pos_y + 70)
+
+    def update(self):
+        pass
 
 
 class AnimatedSprite(pygame.sprite.Sprite):
@@ -193,8 +203,6 @@ def generate_level(level):
                 continue
             elif level[y][x] == '#':
                 TouchableObject('brick', x, y, 70, 70)
-            elif level[y][x] == '-':
-                TouchableObject('floating_land', x, y, 120, 60)
             elif level[y][x] == '&':
                 TouchableObject('cloud', x, y, 200, 70)
             elif level[y][x] == '@':
@@ -203,6 +211,8 @@ def generate_level(level):
                 Enemy('turtle', x, y, 70, 70)
             elif level[y][x] == '1':
                 Flag('flag', x, y, 200, 160)
+            elif level[y][x] == '-':
+                DeathBorder('flag', x, y, 70, 1)
             elif level[y][x] == '*':
                 AnimatedSprite(pygame.transform.scale(load_image('animated_coin.png'), (420, 210)),
                                6, 1, x, y)
@@ -251,8 +261,10 @@ def end_screen():
         score_mark = 'A'
     elif 800 < score < 1000:
         score_mark = 'B'
-    elif score_mark < 800:
+    elif 700 < score_mark < 800:
         score_mark = 'C'
+    elif score_mark < 700:
+        score_mark = 'F'
     intro_text = ["Game Over",
                   f'Score {score_mark}']
     fon = pygame.transform.scale(load_image('starterscreen.jpg'), (WIDTH, HEIGHT))
@@ -280,6 +292,7 @@ all_sprites = pygame.sprite.Group()
 player_group = pygame.sprite.Group()
 platform_group = pygame.sprite.Group()
 flag_group = pygame.sprite.Group()
+death_borders = pygame.sprite.Group()
 collectible_group = pygame.sprite.Group()
 start_sprites = pygame.sprite.Group()
 enemy_group = pygame.sprite.Group()
@@ -304,6 +317,9 @@ background = pygame.transform.scale(load_image('background.png'), (WIDTH, HEIGHT
 while running:
     clock.tick(FPS)
     if pygame.sprite.spritecollideany(player, flag_group):
+        break
+    if pygame.sprite.spritecollideany(player, death_borders):
+        score -= 1000
         break
     score -= 0.01
     score = round(score, 2)
