@@ -69,7 +69,7 @@ class Enemy(pygame.sprite.Sprite):
             self.direction *= -1
         if pygame.sprite.spritecollideany(self, player_group):
             self.kill()
-            score += 500
+            score += 200
 
 
 class TouchableObject(pygame.sprite.Sprite):
