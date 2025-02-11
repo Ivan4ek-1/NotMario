@@ -76,10 +76,17 @@ class TouchableObject(pygame.sprite.Sprite):
     def __init__(self, name, pos_x, pos_y, scale_x, scale_y):
         super().__init__(all_sprites, platform_group)
         tile_filename = name + '.png'
+        self.name = name
         self.image = pygame.transform.scale(load_image(tile_filename), (scale_x, scale_y))
         self.rect = self.image.get_rect().move(TILE_WIDTH * pos_x, TILE_HEIGHT * pos_y)
         if name == 'flag':
             self.rect = self.image.get_rect().move(TILE_WIDTH * pos_x, TILE_HEIGHT * pos_y - 80)
+
+    def update(self):
+        if self.name == 'flag':
+            pass
+            #if pygame.sprite.spritecollideany(self, player_group):
+                #end_screen()
 
 
 class AnimatedSprite(pygame.sprite.Sprite):
